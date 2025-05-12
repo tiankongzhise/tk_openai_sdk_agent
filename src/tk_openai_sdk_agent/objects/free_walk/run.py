@@ -13,6 +13,7 @@ from ...database import (Curd,
                          IpInfoDoubaoVersionPro,
                          SqlAlChemyBase)
 from ...utils import MultiProcessingSave,fomart_agent_rsp,MultiProcessSave
+from sqlalchemy import delete
 
 from datetime import datetime
 import pandas as pd
@@ -80,6 +81,14 @@ def find_missing_combinations(input_str_list:list[str], ai_model:str, db_client:
         
         existing_set = {f"{ip}-{char}" for ip, char in existing}
     return [s for s in input_str_list if s not in existing_set]
+def delete_unknown_records(db_client:Type[Curd],ai_models:list[str]):
+    for ai_model in ai_models:
+        model_class = mapping_table(ai_model)
+        session_func = db_client.get_session()
+        with session_func() as session:
+            stmt = delete(model_class).where(model_class.ai_rsp=="未知")
+            del_records = session.execute(stmt)
+            message.print(f'ai_model:{ai_model},删除了{del_records.rowcount}条记录')
 
 async def run():
     toml_config = get_config()
@@ -92,6 +101,7 @@ async def run():
     
     ai_models = ["DEEPSEEK-R1","DEEPSEEK-V3","DOUBAO-THINKING-PRO","DOUBAO-VISION-PRO"]
     db_client = Curd()
+    delete_unknown_records(db_client,ai_models)
     not_in_db_ip_role_pairs = {ai_model:find_missing_combinations(target_ip_role_pairs,ai_model,db_client) for ai_model in ai_models}
     
     ark_agent = SyncArkAgent()
