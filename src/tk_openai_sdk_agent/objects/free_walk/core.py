@@ -6,9 +6,11 @@ from ...core import SyncAgentWithSdk
 from ...utils import fomart_rsp_str
 
 from ...models import AgentSetting,Response,RspResult
+from ...message import message
 
 from copy import deepcopy
 import json
+import asyncio
 class SyncArkAgent(SyncAgentWithSdk):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
@@ -35,19 +37,35 @@ class SyncArkAgent(SyncAgentWithSdk):
         prompt_template = prompt_template.replace("{{IP_ROLE_PAIRS}}", "\n".join(ip_role_pairs))
         super().set_prompt(prompt_template)
     
+    def set_semaphore(self):
+        semaphore_number = self.semaphore_number
+        self.semaphore = asyncio.Semaphore(semaphore_number)
     async def run(self,ip_role_pairs:list[str],ai_model:str|None = None) -> RspResult:
         self.set_agent_setting()
-        if ai_model: 
-            self.set_ai_model(ai_model)
         self.set_prompt(ip_role_pairs)
-        rsp = await super().run()
+        self.set_semaphore()
+        try:
+            if ai_model:
+                rsp = await super().run(ai_model=ai_model)
+            else:
+                rsp = await super().run()
+        except Exception as e:
+            return RspResult(fail_data=f'模型调用失败,错误原因{str(e)},调用模型{ai_model},prompt:{self.prompt},',message=str(e),status="fail")
         try:
             fomated_rsp_str = fomart_rsp_str(rsp)
             rsp_dict = json.loads(fomated_rsp_str)
+            response = []
             if isinstance(rsp_dict,list):
-                response = [Response(**{**item,'ai_model':self.ai_model}) for item in rsp_dict]
+                for item in rsp_dict:
+                    try:
+                        response.append(Response(**{**item,'ai_model':ai_model}))
+                    except ValueError as e:
+                        message.print(f"item is not a valid Response object:{item},error:{e}")
             elif isinstance(rsp_dict,dict):
-                response = [Response(**{**rsp_dict,'ai_model':self.ai_model})]
+                try:
+                    response = [Response(**{**rsp_dict,'ai_model':ai_model})]
+                except ValueError as e:
+                    message.print(f"rsp_dict is not a valid Response object:{rsp_dict},error:{e}")
             else:
                 raise ValueError(f"rsp_dict is not a list or dict:{rsp_dict}") 
             return RspResult(data=response,message="success",status="success")

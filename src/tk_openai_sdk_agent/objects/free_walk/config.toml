@@ -82,12 +82,12 @@ PROMPT_TEMPLATE = """
 - 数组元素顺序与输入顺序完全一致  
 """
 
-SOURCE_DATA_FILE_PATH = '$/src/tk_ark_agent_with_sdk/data/成都世界线自由行数据.xlsx'
-SUCCESS_RSP_FILE_PATH = '$/src/tk_ark_agent_with_sdk/data/success/temp_rsp.txt'
-FAIL_RSP_FILE_PATH = '$/src/tk_ark_agent_with_sdk/data/fail/fail_rsp.txt'
-INSERT_ERROR_FILE_PATH = '$/src/tk_ark_agent_with_sdk/data/insert_error/insert_fail.txt'
+SOURCE_DATA_FILE_PATH = '$/src/tk_openai_sdk_agent/data/成都世界线自由行数据.xlsx'
+SUCCESS_RSP_FILE_PATH = '$/src/tk_openai_sdk_agent/result/success/temp_rsp.txt'
+FAIL_RSP_FILE_PATH = '$/src/tk_openai_sdk_agent/result/fail/fail_rsp.txt'
+INSERT_ERROR_FILE_PATH = '$/src/tk_openai_sdk_agent/result/insert_error/insert_fail.txt'
 
-MAX_CONCURRENT_TASKS = 100
+SEMAPHORE_NUMBER = 100
 BATCH_SIZE = 100 
 STREAM = false
 PRINT_CONSOLE = false

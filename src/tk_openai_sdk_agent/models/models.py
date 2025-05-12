@@ -1,6 +1,6 @@
 from pydantic import BaseModel,Field
 from typing import Optional
-import asyncio
+
 
 class AiRsp(BaseModel):
     ai_model: str
@@ -20,7 +20,7 @@ class AgentSetting(BaseModel):
     stream: bool 
     print_console: bool
     prompt_template: str
-    semaphore:asyncio.Semaphore|None
+    semaphore_number:int
     
     @classmethod
     def toml_mapping(cls,toml_config:dict):
@@ -32,7 +32,7 @@ class AgentSetting(BaseModel):
             stream=toml_config.get("STREAM"),
             print_console=toml_config.get("PRINT_CONSOLE"),
             prompt_template=toml_config.get("PROMPT_TEMPLATE"),
-            semaphore=asyncio.Semaphore(toml_config.get("SEMAPHORE"))
+            semaphore_number=toml_config.get("SEMAPHORE_NUMBER")
         )
         
 

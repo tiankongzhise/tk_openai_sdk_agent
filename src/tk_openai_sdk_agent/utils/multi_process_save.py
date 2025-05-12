@@ -77,20 +77,20 @@ def create_file_name_by_rsp(file_path: Path, rsp: RspResult):
     return new_file_path
 
 
-def add_time_path(file_path: Path, path_time: datetime | None = None):
+def add_time_path(file_path: Path, path_time: str | None = None):
     if path_time is None:
         return file_path
     else:
         file_parent_path = file_path.parent
         file_name = file_path.name
-        file_new_parent_path = file_parent_path / path_time.strftime("%Y%m%d_%H%M%S")
+        file_new_parent_path = file_parent_path / path_time
         file_new_parent_path.mkdir(parents=True, exist_ok=True)
         file_new_path = file_new_parent_path / file_name
         return file_new_path
 
 
 def success_rsp_local_save(
-    config: dict, rsp: RspResult, path_time: datetime | None = None
+    config: dict, rsp: RspResult, path_time: str | None = None
 ) -> None:
     file_path = add_time_path(get_abs_file_path(config["SUCCESS_RSP_FILE_PATH"]), path_time)
     file_name = create_file_name_by_rsp(file_path, rsp)
@@ -100,7 +100,7 @@ def success_rsp_local_save(
 
 
 def fail_rsp_local_save(
-    config: dict, rsp: RspResult, path_time: datetime | None = None
+    config: dict, rsp: RspResult, path_time: str | None = None
 ) -> None:
     file_path = add_time_path(get_abs_file_path(config["FAIL_RSP_FILE_PATH"]), path_time)
     file_name = create_file_name_with_time(file_path)
@@ -109,7 +109,7 @@ def fail_rsp_local_save(
 
 
 def insert_error_save(
-    config: dict, rsp: RspResult, path_time: datetime | None = None
+    config: dict, rsp: RspResult, path_time: str | None = None
 ) -> None:
     file_path = add_time_path(get_abs_file_path(config["INSERT_ERROR_FILE_PATH"]), path_time)
     file_name = create_file_name_by_rsp(file_path, rsp)
@@ -150,7 +150,7 @@ class MultiProcessSave(object):
         self.fail_rsp_local_save = fail_rsp_local_save
         self.insert_error_save = insert_error_save
         self.db_curd_class = db_curd_class
-        self.runtime = runtime or datetime.now()
+        self.runtime = runtime or datetime.now().strftime("%Y%m%d_%H%M%S")
         # 创建进程间通信的队列
         self.queue = multiprocessing.Queue()
         # 保存进程

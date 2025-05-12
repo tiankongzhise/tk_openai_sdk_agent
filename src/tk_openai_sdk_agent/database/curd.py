@@ -85,3 +85,6 @@ class Curd(BaseCurd):
         except Exception as e:
             message.error(f"add_or_update_table_banch err:{e}")
             return False
+
+    def get_session(self):
+        return get_session

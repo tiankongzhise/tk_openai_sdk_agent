@@ -3,7 +3,6 @@ from typing import Any,Type
 from dotenv import load_dotenv
 from pathlib import Path
 from tk_base_utils import get_abs_file_path, load_toml, get_target_file_path
-from tk_base_utils.file import get_abs_dir_path
 
 from .core import SyncArkAgent
 from ...message import message
@@ -61,6 +60,26 @@ def create_file_path(file_path:str)->Path:
     """
     file_path = Path(file_path)
     return file_path
+def find_missing_combinations(input_str_list:list[str], ai_model:str, db_client:Type[Curd]) -> list[str]:
+    """找出不在数据库中的IP-Character组合"""
+    input_pairs = [s.split('-', 1) for s in input_str_list]
+    input_ips = [pair[0] for pair in input_pairs]
+    input_chars = [pair[1] for pair in input_pairs]
+    session_func = db_client.get_session()
+    model_class = mapping_table(ai_model)
+    
+    with session_func() as session:
+        # 查询数据库中存在的组合
+        existing = session.query(
+            model_class.source_ip_query,
+            model_class.source_character_query
+        ).filter(
+            model_class.source_ip_query.in_(input_ips),
+            model_class.source_character_query.in_(input_chars)
+        ).all()
+        
+        existing_set = {f"{ip}-{char}" for ip, char in existing}
+    return [s for s in input_str_list if s not in existing_set]
 
 async def run():
     toml_config = get_config()
@@ -69,7 +88,12 @@ async def run():
     character = source_data["角色"].tolist()
     ip_role_pairs = [f"{i}-{j}" for i, j in zip(ip, character)]
 
-    target_ip_role_pairs = ip_role_pairs[:305]
+    target_ip_role_pairs = ip_role_pairs
+    
+    ai_models = ["DEEPSEEK-R1","DEEPSEEK-V3","DOUBAO-THINKING-PRO","DOUBAO-VISION-PRO"]
+    db_client = Curd()
+    not_in_db_ip_role_pairs = {ai_model:find_missing_combinations(target_ip_role_pairs,ai_model,db_client) for ai_model in ai_models}
+    
     ark_agent = SyncArkAgent()
     
     saver = MultiProcessSave(
@@ -77,7 +101,7 @@ async def run():
     )
     
     saver.start_process()
-    al_models = ["DEEPSEEK-R1","DEEPSEEK-V3","DOUBAO-THINKING-PRO","DOUBAO-VISION-PRO"]
+    
     batch_size = toml_config.get("BATCH_SIZE")
     print(f'总数据量:{len(target_ip_role_pairs)}')
     
@@ -85,13 +109,13 @@ async def run():
     complete_task_count = 0
     latest_task_count = 0.0
     tasks = []
-    for al_model in al_models:
-        
-        print(f'{al_model}开始')
-        for i in range(0,len(target_ip_role_pairs),batch_size):
-            chunck_data = target_ip_role_pairs[i:i+batch_size]
-            tasks.append(ark_agent.run(chunck_data,al_model))
-        print(f'{al_model}任务已经提交完毕')
+    for ai_model in ai_models:
+        model_to_insert = not_in_db_ip_role_pairs[ai_model]
+        print(f'{ai_model}开始,{len(model_to_insert)}需要处理')
+        for i in range(0,len(model_to_insert),batch_size):
+            chunck_data = model_to_insert[i:i+batch_size]
+            tasks.append(ark_agent.run(chunck_data,ai_model))
+        print(f'{ai_model}任务已经提交完毕')
         
 
     for coro  in asyncio.as_completed(tasks):
@@ -108,7 +132,7 @@ async def run():
         f'总耗时: {total_time:.2f}s, '
         f'平均耗时: {total_time/complete_task_count:.2f}s, '
         f'本次耗时: {cost:.2f}s, '
-        f'上次耗时: {latest_task_count:.2f}s',
+        f'上次耗时: {latest_task_count:.2f}s\n',
         end='\r'  # 修正为 \r（不是 /r）
     )
         latest_task_count = cost

@@ -16,6 +16,7 @@ class AgentWithSdk(object):
         self.print_console: bool = kwargs.get("print_console", False)
         self.client = OpenAI(
             api_key=os.environ.get("ARK_API_KEY"),
+            base_url="https://ark.cn-beijing.volces.com/api/v3",
         )
         self.args: tuple = args
         self.kwargs: dict = kwargs
@@ -85,6 +86,7 @@ class SyncAgentWithSdk(AgentWithSdk):
         # 初始化Ark客户端，从环境变量中读取您的API Key
         self.client = AsyncOpenAI(
             api_key=os.environ.get("ARK_API_KEY"),
+            base_url="https://ark.cn-beijing.volces.com/api/v3",
         )
 
         self.args: tuple = args
@@ -109,7 +111,7 @@ class SyncAgentWithSdk(AgentWithSdk):
         self.print_console = print_console
 
     async def run(self, *args, **kwargs):
-        model_id = self.ai_model_mapping.get(self.ai_model)
+        model_id =self.ai_model_mapping[kwargs.get('ai_model')] or self.ai_model_mapping.get(self.ai_model)
         if model_id is None:
             raise ValueError(
                 f"Invalid ai_model:{self.ai_model},ai_model must be one of {list(self.ai_model_mapping.keys())}"
@@ -117,7 +119,7 @@ class SyncAgentWithSdk(AgentWithSdk):
         
         # 使用 nullcontext 兼容有无信号量的情况
         ctx = self.semaphore if isinstance(self.semaphore, asyncio.Semaphore) else nullcontext()
-        with ctx:
+        async with ctx:
             message.info("----- agent run request -----")
             chat_item = await self.client.chat.completions.create(
                 model=model_id,
@@ -125,10 +127,9 @@ class SyncAgentWithSdk(AgentWithSdk):
                     {"role": "system", "content": self.system_content},
                     {"role": "user", "content": self.prompt},
                 ],
-                # 免费开启推理会话应用层加密，访问 https://www.volcengine.com/docs/82379/1389905 了解更多
-                # extra_headers={'x-is-encrypted': 'true'},
                 # 响应内容是否流式返回
                 stream=self.stream,
+                timeout=300
             )
             if self.stream:
                 rsp = ""
