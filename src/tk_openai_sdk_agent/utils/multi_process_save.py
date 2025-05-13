@@ -6,13 +6,14 @@ import multiprocessing
 from ..database import (
     Curd,
     SqlAlChemyBase,
+    IpinfoDoubaoPro32K,
     IpInfoDeepseekR1,
     IpInfoDeepseekV3,
     IpInfoDoubaoThinkPro,
     IpInfoDoubaoVersionPro,
 )
 from tk_base_utils.file import create_file_name_with_time,get_abs_file_path
-from ..models import RspResult
+from ..models import RspResult,BaseResponse,BaseResult
 from ..message import message
 
 import re
@@ -62,7 +63,7 @@ def sanitize_windows_filename(filename):
     return sanitized
 
 
-def create_file_name_by_rsp(file_path: Path, rsp: RspResult):
+def create_file_name_by_rsp(file_path: Path, rsp: Type[BaseResult]):
     first_data = rsp.data[0]
     last_data = rsp.data[-1]
     first_rsp_info = sanitize_windows_filename(
@@ -90,7 +91,7 @@ def add_time_path(file_path: Path, path_time: str | None = None):
 
 
 def success_rsp_local_save(
-    config: dict, rsp: RspResult, path_time: str | None = None
+    config: dict, rsp: Type[BaseResult], path_time: str | None = None
 ) -> None:
     file_path = add_time_path(get_abs_file_path(config["SUCCESS_RSP_FILE_PATH"]), path_time)
     file_name = create_file_name_by_rsp(file_path, rsp)
@@ -100,7 +101,7 @@ def success_rsp_local_save(
 
 
 def fail_rsp_local_save(
-    config: dict, rsp: RspResult, path_time: str | None = None
+    config: dict, rsp: Type[BaseResult], path_time: str | None = None
 ) -> None:
     file_path = add_time_path(get_abs_file_path(config["FAIL_RSP_FILE_PATH"]), path_time)
     file_name = create_file_name_with_time(file_path)
@@ -109,7 +110,7 @@ def fail_rsp_local_save(
 
 
 def insert_error_save(
-    config: dict, rsp: RspResult, path_time: str | None = None
+    config: dict, rsp: Type[BaseResult], path_time: str | None = None
 ) -> None:
     file_path = add_time_path(get_abs_file_path(config["INSERT_ERROR_FILE_PATH"]), path_time)
     file_name = create_file_name_by_rsp(file_path, rsp)
@@ -176,26 +177,28 @@ class MultiProcessSave(object):
             self.process.terminate()
             message.info("数据保存进程已强制终止")
 
-    def send_data(self, data: list | dict | RspResult):
+    def send_data(self, data: list | dict | Type[BaseResult],dto_model:Type[BaseResult]|None = None):
         """发送数据到保存进程
 
         Args:
             data: 要保存的数据，可以是列表、字典或RspResult对象
         """
-        if isinstance(data, RspResult):
+        if dto_model is None:
+            dto_model = RspResult
+        if isinstance(data, BaseResult):
             # 如果是RspResult对象，直接发送
             self.queue.put(data)
         elif isinstance(data, list):
             # 如果是列表，封装为RspResult对象
-            result = RspResult(status="success", message="数据保存成功", data=data)
+            result = dto_model(status="success", message="数据保存成功", data=data)
             self.queue.put(result)
         elif isinstance(data, dict):
             # 如果是字典，封装为列表再封装为RspResult对象
-            result = RspResult(status="success", message="数据保存成功", data=[data])
+            result = dto_model(status="success", message="数据保存成功", data=[data])
             self.queue.put(result)
         else:
             # 其他类型，封装为失败的RspResult对象
-            result = RspResult(
+            result = dto_model(
                 status="fail", message="数据类型不支持", fail_data=str(data)
             )
             self.queue.put(result)
@@ -207,9 +210,10 @@ class MultiProcessSave(object):
             "DEEPSEEK-V3": IpInfoDeepseekV3,
             "DOUBAO-THINKING-PRO": IpInfoDoubaoThinkPro,
             "DOUBAO-VISION-PRO": IpInfoDoubaoVersionPro,
+            "DOUBAO-PRO-32K": IpinfoDoubaoPro32K,
         }
         return mapping_dict[ai_model]
-    def db_save_func(self, data: RspResult):
+    def db_save_func(self, data: Type[BaseResult]):
         """数据库保存函数，用于将数据保存到数据库"""
         db_client = self.db_curd_class()
         data = [temp.model_dump() for temp in data.data]
@@ -228,7 +232,7 @@ class MultiProcessSave(object):
         while True:
             try:
                 # 从队列获取数据
-                item: RspResult = self.queue.get()
+                item: Type[BaseResult] = self.queue.get()
 
                 # 检查是否是终止信号
                 if item is self.TERMINATION_SENTINEL:

@@ -3,6 +3,8 @@ from .models import (
     IpInfoTable,
     SqlAlChemyBase,
     MixIn,
+    MixedBase,
+    IpinfoDoubaoPro32K,
     IpInfoDeepseekR1,
     IpInfoDeepseekV3,
     IpInfoDoubaoThinkPro,
@@ -12,6 +14,8 @@ from .models import (
 
 __all__ = [
     "Curd",
+    'MixedBase',
+    'IpinfoDoubaoPro32K',
     'IpInfoDoubaoVersionPro',
     'IpInfoDoubaoThinkPro',
     'IpInfoDeepseekR1',

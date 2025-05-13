@@ -34,17 +34,42 @@ class AgentSetting(BaseModel):
             prompt_template=toml_config.get("PROMPT_TEMPLATE"),
             semaphore_number=toml_config.get("SEMAPHORE_NUMBER")
         )
-        
 
-class Response(BaseModel):
+class BaseResponse(BaseModel):
+    source_ip_query: str = Field(...,alias="IP称呼")
+    source_character_query: str = Field(...,alias="角色名称")
+    ai_model: str
+    ai_rsp: str = Field(...,alias="IP官方名称")
+ 
+class BaseResult(BaseModel):
+    status:str
+    message:str
+    data:list[BaseResponse] = Field(default_factory=list)
+    fail_data:Optional[str] = Field(default=None)
+
+class Response(BaseResponse):
     source_ip_query: str = Field(...,alias="IP称呼")
     source_character_query: str = Field(...,alias="角色名称")
     ai_model: str
     ai_rsp: str = Field(...,alias="IP官方名称")
         
     
-class RspResult(BaseModel):
+class RspResult(BaseResult):
     status:str
     message:str
     data:list[Response] = Field(default_factory=list)
+    fail_data:Optional[str] = Field(default=None)
+
+class VerifyResponse(BaseResponse):
+    source_ip_query: str = Field(...,alias="IP称呼")
+    source_character_query: str = Field(...,alias="角色名称")
+    ai_model: str
+    ai_rsp: str = Field(...,alias="验证结果")
+    confidence_level:str = Field(...,alias="置信度")
+    basis:list[str] = Field(...,alias="依据")
+
+class VerifyRspResult(BaseResult):
+    status:str
+    message:str
+    data:list[VerifyResponse] = Field(default_factory=list)
     fail_data:Optional[str] = Field(default=None)

@@ -1,12 +1,12 @@
 from src.tk_openai_sdk_agent.database import Curd
 from src.tk_openai_sdk_agent.objects.free_walk.run import get_source_data,get_abs_file_path
-from src.tk_openai_sdk_agent.objects.free_walk.run import mapping_table
+from src.tk_openai_sdk_agent.objects.check_work.run import mapping_table
 from sqlalchemy import select
 
 source_data = get_source_data('$/src/tk_openai_sdk_agent/data/成都世界线自由行数据.xlsx')
 save_path = get_abs_file_path('$/src/tk_openai_sdk_agent/report/最新报告.xlsx')
 
-ai_models = ["DEEPSEEK-R1","DEEPSEEK-V3","DOUBAO-THINKING-PRO","DOUBAO-VISION-PRO"]
+ai_models = ["DEEPSEEK-R1","DEEPSEEK-V3","DOUBAO-THINKING-PRO","DOUBAO-VISION-PRO",'DOUBAO-PRO-32K']
 db_client = Curd()
 session_func = db_client.get_session()
 
@@ -24,7 +24,7 @@ for ai_model in ai_models:
 
 #对比四个模型的列的值,将第一个模型的值作为标准,统计匹配相同的次数
 
-compare_cols = ["DEEPSEEK-V3","DEEPSEEK-R1", "DOUBAO-THINKING-PRO", "DOUBAO-VISION-PRO"]
+compare_cols = ["DEEPSEEK-V3","DEEPSEEK-R1", "DOUBAO-THINKING-PRO", "DOUBAO-VISION-PRO",'DOUBAO-PRO-32K']
 
 for base_col in compare_cols:
     # 计算匹配数（仅比较指定列）

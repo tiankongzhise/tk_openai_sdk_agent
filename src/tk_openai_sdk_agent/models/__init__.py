@@ -1,4 +1,4 @@
-from .models import IpInfo, AiRsp,AgentSetting, Response, RspResult
+from .models import IpInfo, AiRsp,AgentSetting, Response, RspResult,VerifyResponse,VerifyRspResult,BaseResult,BaseResponse
 
 
-__all__ = [IpInfo, AiRsp,AgentSetting, Response, RspResult]
+__all__ = [IpInfo, AiRsp,AgentSetting, Response, RspResult,VerifyRspResult,VerifyResponse,BaseResult,BaseResponse]
