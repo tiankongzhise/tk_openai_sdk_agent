@@ -5,7 +5,7 @@ from typing import Any, Generator
 from tk_base_utils import get_abs_file_path
 from tk_base_utils import load_toml,get_target_file_path
 
-from .models import FreeWalkSourceData,FreeWalkSourceDTO,PreWorkDTO
+from .models import FreeWalkSourceData,FreeWalkSourceDTO,PreWorkDTO,VerifySourceData,PreVerifyDTO
 
 import pandas as pd
 
@@ -14,8 +14,6 @@ def get_config() -> dict[str, Any]:
     config_path = get_target_file_path("config.toml")
     toml_config = load_toml(config_path)
     return toml_config
-
-
 
 
 def get_source_data(source_file_path: str|Path) -> FreeWalkSourceDTO:
@@ -33,12 +31,13 @@ def get_source_data(source_file_path: str|Path) -> FreeWalkSourceDTO:
         extra_info={},
         data=_get_source_data())
 
+
+
 def pre_process(*args,**kwargs):
     toml_config = get_config()
     source_data_file_path  = toml_config.get("SOURCE_DATA_FILE_PATH")
     source_data = get_source_data(source_data_file_path)
     
-    #是否需要针对源数据进行预处理,比如说出重,去除数据库重复项目等
     
     return PreWorkDTO(
         status="success",
@@ -48,4 +47,28 @@ def pre_process(*args,**kwargs):
         toml_config=toml_config)
     
     
+ 
+def get_verify_source_data(source_file_path: str|Path) -> Generator[VerifySourceData, Any, None]:
+    if isinstance(source_file_path,str):
+        source_file_path = get_abs_file_path(source_file_path)
+    df = pd.read_excel(source_file_path, sheet_name="Sheet1")
+    records = df.to_dict(orient="records")
     
+    def _get_source_data() -> Generator[VerifySourceData, Any, None]:
+        for record in records:
+            yield VerifySourceData(**record)
+    return _get_source_data()   
+
+
+def pre_verify_process(*args,**kwargs):
+    toml_config = get_config()
+    source_data_file_path  = toml_config["VERIFY_SOURCE_DATA_FILE_PATH"]
+    source_data = get_verify_source_data(source_data_file_path)
+    
+    
+    return PreVerifyDTO(
+        status="success",
+        message="pre_verify_process return success",
+        extra_info={},
+        data=list(source_data)[:10],
+        toml_config=toml_config)

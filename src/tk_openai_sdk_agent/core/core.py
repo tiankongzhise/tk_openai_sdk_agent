@@ -95,6 +95,9 @@ class SyncAgentWithSdk(AgentWithSdk):
     def set_system_content(self, system_content: str):
         self.system_content = system_content
 
+    def set_prompt_template(self, prompt_template: str):
+        self.prompt_template = prompt_template
+        
     def set_prompt(self, prompt: str):
         self.prompt = prompt
 
