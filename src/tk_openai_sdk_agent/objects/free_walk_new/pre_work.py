@@ -70,5 +70,5 @@ def pre_verify_process(*args,**kwargs):
         status="success",
         message="pre_verify_process return success",
         extra_info={},
-        data=list(source_data)[:10],
+        data=list(source_data),
         toml_config=toml_config)

@@ -7,8 +7,9 @@ from ...database import Curd
 from .db_models import aimodel_orm_mapping
 
 from tk_base_utils.file import create_file_name_with_time,get_abs_file_path
-from .models import BaseDTO,BaseResponse
+from .models import BaseDTO
 from ...message import message
+from ...error_trace import get_error_detail
 
 import re
 
@@ -190,7 +191,7 @@ class MultiProcessSave(object):
         try:
             return db_client.bulk_insert_ignore_in_chunks(table, data)
         except Exception as e:
-            message.error(f"db_save_func err:{e}")
+            message.error(f"db_save_func err:{get_error_detail(e)}")
             raise e
 
     def _run(self):
@@ -225,13 +226,13 @@ class MultiProcessSave(object):
                     message.info(f"成功保存{db_save_result}条数据到数据库和本地文件")
             except Exception as e:
                 # 处理异常
-                message.error(f"数据保存过程中发生异常: {str(e)}")
+                message.error(f"数据保存过程中发生异常: {get_error_detail(e)}")
                 try:
                     # 尝试保存失败数据
                     self.insert_error_save(self.config, item, self.runtime)
                     fail_count += 1
                 except Exception as save_e:
-                    message.error(f"保存失败数据时发生异常: {str(save_e)}")
+                    message.error(f"保存失败数据时发生异常: {get_error_detail(save_e)}")
 
         # 进程结束时输出统计信息
         message.info(

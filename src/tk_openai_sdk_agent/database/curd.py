@@ -6,6 +6,7 @@ from typing import Type
 from pydantic import BaseModel
 from sqlalchemy import update
 from ..message import message
+from ..error_trace import get_error_detail
 
 class Curd(BaseCurd):
     def __init__(self,*args,**kwargs):
@@ -47,7 +48,7 @@ class Curd(BaseCurd):
                 self.query_mapping[unique_index] = {'key_id':temp_table.key_id,'ai_rsp':temp_table.ai_rsp}
                 return {'status':'success','operation':'add'}
         except Exception as e:
-            return {'status':'error','operation':'add','error':str(e)}
+            return {'status':'error','operation':'add','error':get_error_detail(e)}
 
     def _create_update_data(self,unique_index:str,rsp:dict)->dict:
         key_id = self.query_mapping[unique_index]['key_id']
@@ -83,7 +84,7 @@ class Curd(BaseCurd):
             return True
                         
         except Exception as e:
-            message.error(f"add_or_update_table_banch err:{e}")
+            message.error(f"add_or_update_table_banch err:{get_error_detail(e)}")
             return False
 
     def get_session(self):

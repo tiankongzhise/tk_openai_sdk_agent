@@ -156,10 +156,10 @@ def verify_exclude_existing_in_db(data:DuplicateVerifyDTO,db_client:Curd,db_orm:
     message.info(f'正在检测{db_orm.__tablename__}表是否存在重复元素')
     filter_count = 0
     with session_func() as session:
-        del_stmt = delete(db_orm).where(db_orm.ai_rsp=="未知")
-        del_records = session.execute(del_stmt)
-        message.print(f'table:{db_orm.__tablename__}删除了{del_records.rowcount}条未知记录')
-        session.flush()
+        # del_stmt = delete(db_orm).where(db_orm.ai_rsp=="未知")
+        # del_records = session.execute(del_stmt)
+        # message.print(f'table:{db_orm.__tablename__}删除了{del_records.rowcount}条未知记录')
+        # session.flush()
         stmt = select(db_orm)
         db_result = session.execute(stmt).scalars().all()
         message.info(f'{db_orm.__tablename__}表共有{len(db_result)}条记录')

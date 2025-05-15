@@ -6,6 +6,7 @@ from datetime import datetime
 from ..database import Curd, SqlAlChemyBase
 from ..file import write_rsp, write_fail_rsp
 from ..models import RspResult
+from ..error_trace import get_error_detail
 
 from ..message import message
 import re
@@ -38,8 +39,14 @@ def fomart_rsp(rsp: list[dict], ai_model: str) -> list[dict]:
         for item in rsp
     ]
 def fix_json(json_str:str):
+    
+    # 预处理: 去除第一个[之前的所有字符串
+    json_str =  '['+json_str.split('[', 1)[-1]
+        
     # 预处理：去除首尾空白字符
     json_str = json_str.strip()
+    
+    
     
     # 尝试直接解析完整JSON
     try:
@@ -89,10 +96,12 @@ def fomart_rsp_str(rsp: str):
     
     
     if "json" in rsp:
-        pattern = r"```json\n([\s\S]*?)```"
-        result = re.findall(pattern, rsp)[0].strip()
-        return result
-    
+        try:
+            pattern = r"```json\n([\s\S]*?)```"
+            result = re.findall(pattern, rsp)[0].strip()
+            return result
+        except Exception as e:
+            message.debug(get_error_detail(e))
     rsp = fix_json(rsp)
     
     return rsp
@@ -168,7 +177,7 @@ class MultiProcessingSave(object):
                     data,
                 )
                 fail_count += len(item)
-                message.error(e)
+                message.error(get_error_detail(e))
             finally:
                 message.info(
                     f"从{self.runtime}开始多线程写入数据完毕,共成功{inserted_count}条,失败{fail_count}条"

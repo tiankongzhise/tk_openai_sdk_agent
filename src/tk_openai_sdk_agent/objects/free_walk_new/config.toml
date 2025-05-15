@@ -104,10 +104,10 @@ VERIFY_PROMPT_TEMPLATE = """
 
 <输入格式说明>  
 输入数据为多行文本，每行格式为：  
-"IP称呼-角色名称-AI模型1认为的IP官方名称-AI模型2认为的IP官方名称-AI模型3认为的IP官方名称-AI模型4认为的IP官方名称"  
+"IP称呼@角色名称@AI模型1认为的IP官方名称@AI模型2认为的IP官方名称@AI模型3认为的IP官方名称@AI模型4认为的IP官方名称"  
 示例输入：  
-惊封-菲比-我在惊悚游戏里封神-未知-我在惊悚游戏里封神-我在惊悚游戏里封神
-萝莉神安魂曲-时雨羽衣-安魂曲-未知-未知-未知
+惊封@菲比@我在惊悚游戏里封神@未知@我在惊悚游戏里封神@我在惊悚游戏里封神
+萝莉神安魂曲@时雨羽衣@安魂曲@未知@未知@未知
 </输入格式说明>  
 
 验证规则：
@@ -162,7 +162,7 @@ VERIFY_PROMPT_TEMPLATE = """
 
 现在开始处理以下输入数据：  
 <输入数据>  
-{{IP_ROLE_PAIRS}}  
+{{QUERY_DATA}}
 </输入数据>  
 
 请确保：  
@@ -179,7 +179,7 @@ FAIL_RSP_FILE_PATH = '$/src/tk_openai_sdk_agent/result/fail/fail_rsp.txt'
 INSERT_ERROR_FILE_PATH = '$/src/tk_openai_sdk_agent/result/insert_error/insert_fail.txt'
 
 SEMAPHORE_NUMBER = 100
-BATCH_SIZE = 100 
+BATCH_SIZE = 50 
 STREAM = false
 PRINT_CONSOLE = false
 

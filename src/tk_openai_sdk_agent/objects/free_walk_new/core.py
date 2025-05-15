@@ -1,6 +1,7 @@
 from ...core import SyncAgentWithSdk,AgentWithSdk
 from ...utils import fomart_rsp_str
 from ...message import message
+from ...error_trace import get_error_detail
 from .models import DuplicateDTO,FreeWalkSourceData,LLMResponseData,LLMResponseDTO,MultiLLMVerifyData,MultiLLMVerifyDTO,VerifySourceData,DuplicateVerifyDTO
 
 from asyncio import Semaphore
@@ -12,14 +13,17 @@ import pandas as pd
 def temp_save(hallucination_data,lost_data):
     from pathlib import Path
     from datetime import datetime
-    df = pd.DataFrame({
+    
+    temp_dict = {
         " hallucination_data ":list(hallucination_data),
         " lost_data ":list(lost_data)
-    })
+    }
+    df =pd.DataFrame({k: pd.Series(v) for k, v in temp_dict.items()})
     file_path = Path(__file__).parent / "temp"
     file_path.mkdir(parents=True, exist_ok=True)
     file_name = file_path / f"hallucination_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-    df.to_excel(file_name,index=False)
+    if not df.empty:
+        df.to_excel(file_name,index=False)
 
 def hallucination_data_statistics(source_data:list[FreeWalkSourceData|VerifySourceData],format_data:list[LLMResponseData|MultiLLMVerifyData]):
     source_data_set = set([f"{i.ip}@{i.character}" for i in source_data])
@@ -77,7 +81,7 @@ class AsyncLLMResponseFetcher(SyncAgentWithSdk):
             else:
                 rsp = await super().run()
         except Exception as e:
-            return LLMResponseDTO(fail_data=f'模型调用失败,错误原因{str(e)},调用模型{ai_model},prompt:{self.prompt},',message=str(e),status="fail")
+            return LLMResponseDTO(fail_data=f'模型调用失败,错误原因{get_error_detail(e)},调用模型{ai_model},prompt:{self.prompt},',message=get_error_detail(e),status="fail")
         try:
             fomated_rsp_str = fomart_rsp_str(rsp)
             rsp_dict = json.loads(fomated_rsp_str)
@@ -100,7 +104,7 @@ class AsyncLLMResponseFetcher(SyncAgentWithSdk):
                          f'重复的回答:{temp_count['duplicated_data_count']},幻觉回答:{temp_count['hallucination_data_count']},丢失询问:{temp_count['lost_data_count']}')
             return LLMResponseDTO(data=response,message="success",status="success")
         except Exception as e:
-            return LLMResponseDTO(fail_data=rsp+f'_@#ai_model={ai_model}',message=str(e),status="fail")
+            return LLMResponseDTO(fail_data=rsp+f'_@#ai_model={ai_model}',message=get_error_detail(e),status="fail")
         
 
 class AsyncMultiLLMResultVerifier(SyncAgentWithSdk):
@@ -133,7 +137,7 @@ class AsyncMultiLLMResultVerifier(SyncAgentWithSdk):
             else:
                 rsp = await super().run()
         except Exception as e:
-            return MultiLLMVerifyDTO(fail_data=f'模型调用失败,错误原因{str(e)},调用模型{ai_model},prompt:{self.prompt},',message=str(e),status="fail")
+            return MultiLLMVerifyDTO(fail_data=f'模型调用失败,错误原因{get_error_detail(e)},调用模型{ai_model},prompt:{self.prompt},',message=get_error_detail(e),status="fail")
         try:
             fomated_rsp_str = fomart_rsp_str(rsp)
             rsp_dict = json.loads(fomated_rsp_str)
@@ -156,4 +160,4 @@ class AsyncMultiLLMResultVerifier(SyncAgentWithSdk):
                          f'重复的回答:{temp_count['duplicated_data_count']},幻觉回答:{temp_count['hallucination_data_count']},丢失询问:{temp_count['lost_data_count']}')
             return MultiLLMVerifyDTO(data=response,message="success",status="success")
         except Exception as e:
-            return MultiLLMVerifyDTO(fail_data=rsp+f'_@#ai_model={ai_model}',message=str(e),status="fail")
+            return MultiLLMVerifyDTO(fail_data=rsp+f'_@#ai_model={ai_model}',message=get_error_detail(e),status="fail")
