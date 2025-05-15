@@ -23,7 +23,7 @@ for i,c in zip(ip,character):
 df = pd.DataFrame(result)
 
     
-
+is_verify = True
 
 
 
@@ -36,6 +36,9 @@ temp_data_path.parent.mkdir(parents=True,exist_ok=True)
 df.to_excel(temp_data_path,index=False)
 
 ai_models = toml_config['AI_MODEL_LIST']
+if is_verify:
+    ai_models.append(toml_config['VERIFY_AI_MODEL'])
+
 db_client = Curd()
 session_func = db_client.get_session()
 
