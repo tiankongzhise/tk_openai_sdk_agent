@@ -1,7 +1,7 @@
-from pydantic import BaseModel,Field,validator
+from pydantic import BaseModel,Field
 from pathlib import Path
-from tk_base_utils import get_abs_file_path
-from tk_base_utils.file import get_abs_dir_path
+from tk_base_utils import get_abs_path
+
 
 
 class AiPromptConfig(BaseModel):
@@ -64,7 +64,7 @@ class FileConfig(BaseModel):
     success_response_file_path:Path
     fail_response_file_path:Path
     insert_error_file_path:Path
-    @validator
+
     def __init__(self,*,source_data_file_path:Path|str,
                  source_data_dir_path:Path|str,
                  verify_data_file_path:Path|str,
@@ -79,14 +79,7 @@ class FileConfig(BaseModel):
             if key == "temp_dict":
                 continue
             if isinstance(value,str):
-                
-                
-                if 'file_path' in key:
-                    temp_dict[key] = get_abs_file_path(value)
-                elif 'dir_path' in key:
-                    temp_dict[key] = get_abs_dir_path(value)
-                else:
-                    raise Exception(f"FileConfig初始化失败{key}不包含file_path或dir_path")
+                temp_dict[key] = get_abs_path(value)
             else:
                 temp_dict[key] = value
         return super().__init__(**temp_dict)

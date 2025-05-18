@@ -1,5 +1,5 @@
 from src.tk_openai_sdk_agent.database import Curd
-from src.tk_openai_sdk_agent.objects.free_walk.run import get_source_data,get_abs_file_path
+from src.tk_openai_sdk_agent.objects.free_walk_new.pre_work import get_source_data,get_abs_file_path
 from src.tk_openai_sdk_agent.objects.free_walk_new.db_models import aimodel_orm_mapping
 from src.tk_openai_sdk_agent.objects.free_walk_new.models import FreeWalkSourceData
 from tk_base_utils import load_toml
